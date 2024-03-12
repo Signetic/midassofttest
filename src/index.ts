@@ -82,7 +82,7 @@ function quickestPath(board: { ladders: [number, number][]; snakes: [number, num
             }
             const checkLadder = board.ladders.find((item) => item[0] == nextSquare)
             const checkSnake = board.snakes.find((item) => item[0] == nextSquare)
-            let destination: number = 0;
+            let destination: number = nextSquare;
             if (checkLadder) {
                 destination = checkLadder[1];
 
@@ -100,11 +100,6 @@ function quickestPath(board: { ladders: [number, number][]; snakes: [number, num
     return [];
 }
 
-
-
-
-
-
 function minEnergy(
     start: number,
     shops: number[],
@@ -113,12 +108,10 @@ function minEnergy(
 ): number {
     let minimumEnergy = Infinity;
     const numShops = shops.length;
-    // let minTravel: number[] = [];
     for (let subsetMask = 0; subsetMask < (1 << numShops); subsetMask++) {
         let energy = 0;
         let currentPosition = start;
         let countShop = 0;
-        // let travel: string[] = [`start: ${start}`];
         for (let shopIndex = 0; shopIndex < numShops; shopIndex++) {
 
             if ((subsetMask & (1 << shopIndex)) !== 0) {
@@ -126,24 +119,17 @@ function minEnergy(
                 energy += findMinDistance(currentPosition, shopPosition, stations);
                 currentPosition = shopPosition;
                 countShop++;
-                // travel.push(`currentPosition : ${currentPosition} , shopPosition: ${shopPosition}  , energy : ${energy}`)
-
             }
         }
         if (countShop == numShops) {
             energy += findMinDistance(currentPosition, target, stations);
             minimumEnergy = Math.min(minimumEnergy, energy);
-            // travel.push(`currentPosition : ${currentPosition} , shopPosition: ${target} , energy : ${energy}`);
-            // console.log(travel)
-            // minTravel = travel
         }
     }
-
     return minimumEnergy;
 }
 
 function findMinDistance(start: number, end: number, stations: number[]): number {
-
     let minDistance = Math.abs(end - start);
     for (const station of stations) {
         const distanceToStation = Math.abs(start - station);
@@ -155,19 +141,13 @@ function findMinDistance(start: number, end: number, stations: number[]): number
     }
     return minDistance;
 }
-const test11 = getClockAngle(`09:00`);
-const test12 = getClockAngle(`17:30`);
-const test21 = getQuestionPart([`BATHROOM`, `BATH SALTS`, `BLOODBATH`])
-const test22 = getQuestionPart([`BEFRIEND`, `GIRLFRIEND`, `FRIENDSHIP`])
-const test3 = quickestPath({
-    ladders: [[3, 39], [14, 35], [31, 70], [44, 65], [47, 86], [63, 83], [71, 93]],
-    snakes: [[21, 4], [30, 8], [55, 38], [79, 42], [87, 54], [91, 48], [96, 66]]
-})
-const test4 = minEnergy(0, [4, 9], [3, 6, 8], 11)
-
-// console.log(test11)
-// console.log(test12)
-// console.log(test21)
-// console.log(test22)
-// console.log(test3)
-// console.log(test4)
+// const test11 = getClockAngle(`09:00`);
+// const test12 = getClockAngle(`17:30`);
+// const test21 = getQuestionPart([`BATHROOM`, `BATH SALTS`, `BLOODBATH`])
+// const test22 = getQuestionPart([`BEFRIEND`, `GIRLFRIEND`, `FRIENDSHIP`])
+// const test3 = quickestPath({
+//     ladders: [[3, 39], [14, 35], [31, 70], [44, 65], [47, 86], [63, 83], [71, 93]],
+//     snakes: [[21, 4], [30, 8], [55, 38], [79, 42], [87, 54], [91, 48], [96, 66]]
+// })
+// const test4 = minEnergy(0, [4, 9], [3, 6, 8], 11)
+// const test4 = minEnergy(0, [7,8,16], [3, 9, 15], 17)
