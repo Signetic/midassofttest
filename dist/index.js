@@ -131,6 +131,4 @@ function findMinDistance(start, end, stations) {
     }
     return minDistance;
 }
-const test4 = minEnergy(0, [7, 8, 16], [3, 9, 15], 17);
-console.log(test4);
 //# sourceMappingURL=index.js.map
