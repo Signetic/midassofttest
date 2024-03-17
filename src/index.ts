@@ -106,40 +106,95 @@ function minEnergy(
     stations: number[],
     target: number,
 ): number {
+    let travelLog: object[] = [];
     let minimumEnergy = Infinity;
     const numShops = shops.length;
-    for (let subsetMask = 0; subsetMask < (1 << numShops); subsetMask++) {
+    let pShops = generateAllPermutations(shops);
+    for (let subsetMask = 0; subsetMask < pShops.length; subsetMask++) {
+        travelLog = [];
         let energy = 0;
         let currentPosition = start;
-        let countShop = 0;
+        const pShopNow = pShops[subsetMask]
+        travelLog.push({
+            type: "start",
+            position: start
+        });
         for (let shopIndex = 0; shopIndex < numShops; shopIndex++) {
+            const shopPosition = pShopNow[shopIndex];
+            const { minDistance, route } = findMinDistance(currentPosition, shopPosition, stations);
+            energy += minDistance
+            currentPosition = shopPosition;
+            travelLog.push({
+                type: "shop",
+                position: currentPosition,
+                shopIndex: shopIndex,
+                route: route,
+                energyUse: minDistance,
+                energySum: energy
+            });
+        }
+        const { minDistance, route } = findMinDistance(currentPosition, target, stations);
+        energy += minDistance
+        minimumEnergy = Math.min(minimumEnergy, energy);
+        travelLog.push({
+            type: "target",
+            position: target,
+            energyUse: minDistance,
+            route: route,
+            min: minimumEnergy,
+        });
 
-            if ((subsetMask & (1 << shopIndex)) !== 0) {
-                const shopPosition = shops[shopIndex];
-                energy += findMinDistance(currentPosition, shopPosition, stations);
-                currentPosition = shopPosition;
-                countShop++;
-            }
-        }
-        if (countShop == numShops) {
-            energy += findMinDistance(currentPosition, target, stations);
-            minimumEnergy = Math.min(minimumEnergy, energy);
-        }
     }
     return minimumEnergy;
 }
+function generateAllPermutations(shops: number[]): number[][] {
+    const results: number[][] = [];
 
-function findMinDistance(start: number, end: number, stations: number[]): number {
-    let minDistance = Math.abs(end - start);
-    for (const station of stations) {
-        const distanceToStation = Math.abs(start - station);
-        const ss = stations.filter((s) => s != station)
-        for (const ss_end of ss) {
-            const distanceFromStation = Math.abs(end - ss_end);
-            minDistance = Math.min(minDistance, distanceToStation + distanceFromStation);
+    function permute(currentArray: number[], remainingShops: number[]) {
+        if (remainingShops.length === 0) {
+            results.push(currentArray);
+            return;
+        }
+
+        for (let i = 0; i < remainingShops.length; i++) {
+            const newShop = remainingShops[i];
+            const newRemainingShops = remainingShops.slice(0, i).concat(remainingShops.slice(i + 1));
+            const newCurrentArray = currentArray.concat([newShop]);
+            permute(newCurrentArray, newRemainingShops);
         }
     }
-    return minDistance;
+    permute([], shops);
+    return results;
+}
+function findMinDistance(start: number, end: number, stations: number[]): { minDistance: number, route: object[] } {
+    let minDistance = Math.abs(end - start);
+    let route: object[] = []
+    let minStart = minDistance;
+    let minEnd = minDistance;
+    for (const station of stations) {
+        const distanceToStation = Math.abs(start - station);
+        if (minStart > distanceToStation) {
+            minStart = Math.min(minStart, distanceToStation);
+            route.push({
+                start: `${start} => ${station}`
+            })
+        }
+    }
+    for (const station of stations) {
+        const distanceFromStation = Math.abs(end - station);
+        if (minEnd > distanceFromStation) {
+            minEnd = Math.min(minEnd, distanceFromStation);
+            route.push({
+                end: `${station} => ${end}`
+            })
+        }
+    }
+    if (minDistance <= minStart + minEnd) {
+        route = []
+    } else {
+        minDistance = Math.min(minDistance, minStart + minEnd);
+    }
+    return { minDistance, route };
 }
 // const test11 = getClockAngle(`09:00`);
 // const test12 = getClockAngle(`17:30`);
@@ -149,5 +204,8 @@ function findMinDistance(start: number, end: number, stations: number[]): number
 //     ladders: [[3, 39], [14, 35], [31, 70], [44, 65], [47, 86], [63, 83], [71, 93]],
 //     snakes: [[21, 4], [30, 8], [55, 38], [79, 42], [87, 54], [91, 48], [96, 66]]
 // })
+
+// const test4 = minEnergy(0, [9, 4], [3, 6, 8], 11)
 // const test4 = minEnergy(0, [4, 9], [3, 6, 8], 11)
-// const test4 = minEnergy(0, [7,8,16], [3, 9, 15], 17)
+// const test4 = minEnergy(0, [7, 8, 16], [3, 9, 15], 17)
+// const test4 = minEnergy(1, [4, 8, 16], [3, 9, 15], 20)

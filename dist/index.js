@@ -98,37 +98,92 @@ function quickestPath(board) {
     return [];
 }
 function minEnergy(start, shops, stations, target) {
+    let travelLog = [];
     let minimumEnergy = Infinity;
     const numShops = shops.length;
-    for (let subsetMask = 0; subsetMask < (1 << numShops); subsetMask++) {
+    let pShops = generateAllPermutations(shops);
+    for (let subsetMask = 0; subsetMask < pShops.length; subsetMask++) {
+        travelLog = [];
         let energy = 0;
         let currentPosition = start;
-        let countShop = 0;
+        const pShopNow = pShops[subsetMask];
+        travelLog.push({
+            type: "start",
+            position: start
+        });
         for (let shopIndex = 0; shopIndex < numShops; shopIndex++) {
-            if ((subsetMask & (1 << shopIndex)) !== 0) {
-                const shopPosition = shops[shopIndex];
-                energy += findMinDistance(currentPosition, shopPosition, stations);
-                currentPosition = shopPosition;
-                countShop++;
-            }
+            const shopPosition = pShopNow[shopIndex];
+            const { minDistance, route } = findMinDistance(currentPosition, shopPosition, stations);
+            energy += minDistance;
+            currentPosition = shopPosition;
+            travelLog.push({
+                type: "shop",
+                position: currentPosition,
+                shopIndex: shopIndex,
+                route: route,
+                energyUse: minDistance,
+                energySum: energy
+            });
         }
-        if (countShop == numShops) {
-            energy += findMinDistance(currentPosition, target, stations);
-            minimumEnergy = Math.min(minimumEnergy, energy);
-        }
+        const { minDistance, route } = findMinDistance(currentPosition, target, stations);
+        energy += minDistance;
+        minimumEnergy = Math.min(minimumEnergy, energy);
+        travelLog.push({
+            type: "target",
+            position: target,
+            energyUse: minDistance,
+            route: route,
+            min: minimumEnergy,
+        });
     }
     return minimumEnergy;
 }
-function findMinDistance(start, end, stations) {
-    let minDistance = Math.abs(end - start);
-    for (const station of stations) {
-        const distanceToStation = Math.abs(start - station);
-        const ss = stations.filter((s) => s != station);
-        for (const ss_end of ss) {
-            const distanceFromStation = Math.abs(end - ss_end);
-            minDistance = Math.min(minDistance, distanceToStation + distanceFromStation);
+function generateAllPermutations(shops) {
+    const results = [];
+    function permute(currentArray, remainingShops) {
+        if (remainingShops.length === 0) {
+            results.push(currentArray);
+            return;
+        }
+        for (let i = 0; i < remainingShops.length; i++) {
+            const newShop = remainingShops[i];
+            const newRemainingShops = remainingShops.slice(0, i).concat(remainingShops.slice(i + 1));
+            const newCurrentArray = currentArray.concat([newShop]);
+            permute(newCurrentArray, newRemainingShops);
         }
     }
-    return minDistance;
+    permute([], shops);
+    return results;
+}
+function findMinDistance(start, end, stations) {
+    let minDistance = Math.abs(end - start);
+    let route = [];
+    let minStart = minDistance;
+    let minEnd = minDistance;
+    for (const station of stations) {
+        const distanceToStation = Math.abs(start - station);
+        if (minStart > distanceToStation) {
+            minStart = Math.min(minStart, distanceToStation);
+            route.push({
+                start: `${start} => ${station}`
+            });
+        }
+    }
+    for (const station of stations) {
+        const distanceFromStation = Math.abs(end - station);
+        if (minEnd > distanceFromStation) {
+            minEnd = Math.min(minEnd, distanceFromStation);
+            route.push({
+                end: `${station} => ${end}`
+            });
+        }
+    }
+    if (minDistance <= minStart + minEnd) {
+        route = [];
+    }
+    else {
+        minDistance = Math.min(minDistance, minStart + minEnd);
+    }
+    return { minDistance, route };
 }
 //# sourceMappingURL=index.js.map
